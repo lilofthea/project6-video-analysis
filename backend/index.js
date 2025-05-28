@@ -1,22 +1,23 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const multer = require('multer');
+const fs = require('fs');
 const { VideoIntelligenceServiceClient } = require('@google-cloud/video-intelligence');
+
 const app = express();
 const PORT = 3000;
+const client = new VideoIntelligenceServiceClient({ keyFilename: 'gcp-key.json' });
 
-app.use(bodyParser.json());
+const upload = multer({ dest: 'uploads/' });
 
-
-const client = new VideoIntelligenceServiceClient({
-  keyFilename: 'gcp-key.json'
-});
-
-app.post('/api/analyze', async (req, res) => {
-  const videoUri = req.body.uri;
+app.post('/api/analyze', upload.single('video'), async (req, res) => {
+  const filePath = req.file.path;
 
   try {
+    const file = fs.readFileSync(filePath);
+    const inputContent = file.toString('base64');
+
     const [operation] = await client.annotateVideo({
-      inputUri: videoUri,
+      inputContent,
       features: ['LABEL_DETECTION'],
     });
 
@@ -31,11 +32,13 @@ app.post('/api/analyze', async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Analiz hatası:', error);
+    console.error('Hata:', error);
     res.status(500).json({ error: 'Video analiz hatası' });
+  } finally {
+    fs.unlinkSync(filePath);
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`API çalışıyor: http://localhost:${PORT}`);
+  console.log(`Server http://localhost:${PORT} üzerinde çalışıyor`);
 });
