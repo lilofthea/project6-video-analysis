@@ -1,1 +1,1 @@
-Tanitim videosu => https://youtu.be/v2U9sFrdhBk
+Tanitim videosu => https://youtu.be/T2QfP6wV7XY 
